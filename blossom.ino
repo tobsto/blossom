@@ -5,7 +5,33 @@ int inputPin1 = 6;
 // input 2 pin
 int inputPin2 = 9;
 
-int input=0;
+
+void runleft(int t)
+{
+	// start motor in left direction
+	digitalWrite(inputPin1, LOW);
+	digitalWrite(inputPin2, HIGH);
+	// enable motor
+	digitalWrite(enablePin, HIGH);
+	delay(t);
+}
+void runright(int t)
+{
+	// start motor in right direction
+	digitalWrite(inputPin1, HIGH);
+	digitalWrite(inputPin2, LOW);
+	// enable motor
+	digitalWrite(enablePin, HIGH);
+	delay(t);
+}
+void hold(int t)
+{
+	// stop motor
+	digitalWrite(enablePin, LOW);
+	delay(t);
+}
+
+bool run;
 void setup()
 {
 	// Set enable pin to output mode
@@ -16,52 +42,31 @@ void setup()
 	pinMode(inputPin2, OUTPUT);
 	// set up serial communication
 	Serial.begin(9600);
+	// initial state is hold
+	run=false;
 }
+
 void loop()
 {
-	bool stopped=true;
+	// read input if available
 	if (Serial.available()>0)
 	{
-		input=Serial.read() - '0';
+		int input=Serial.read() - '0';
 		Serial.println(input);
-		if (input==1)
+		if (input%2==0)
 		{
-			// start if necessary
-			if (stopped)
-			{
-				// switch on motor by enable pin
-				digitalWrite(enablePin, HIGH);
-			}
-			// stop motor shortly
-			digitalWrite(inputPin1, LOW);
-			digitalWrite(inputPin2, LOW);
-			delay(10);
-			// start motor in one direction
-			digitalWrite(inputPin1, LOW);
-			digitalWrite(inputPin2, HIGH);
-		}
-		else if (input==2)
-		{
-			// start if necessary
-			if (stopped)
-			{
-				// switch on motor by enable pin
-				digitalWrite(enablePin, HIGH);
-			}
-			// stop motor shortly
-			digitalWrite(inputPin1, LOW);
-			digitalWrite(inputPin2, LOW);
-			delay(10);
-			// start motor in other direction
-			digitalWrite(inputPin1, HIGH);
-			digitalWrite(inputPin2, LOW);
+			run=true;
 		}
 		else
 		{
-			// stop motor by switching og enable pin 
-			digitalWrite(enablePin, LOW);
-			stopped=true;
+			run=false;
 		}
 	}
-	delay(10);
+	if (run)
+	{
+		runleft(2000);
+		hold(300);
+		runright(2000);
+		hold(300);
+	}
 }
