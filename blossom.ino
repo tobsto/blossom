@@ -4,7 +4,16 @@ int enablePin = 3;
 int inputPin1 = 6;
 // input 2 pin
 int inputPin2 = 9;
-
+// analog input pin on the arduino for the proximity sensor 
+int sensePin=0;
+// maximal sensor value
+int sense_max=410;
+// minimal sensor value
+int sense_min=20;
+// threshold sensor value for people detection
+int sense_boundary=100;
+// check if someone is there
+bool check=true;
 
 void runleft(int t)
 {
@@ -43,30 +52,41 @@ void setup()
 	// set up serial communication
 	Serial.begin(9600);
 	// initial state is hold
-	run=false;
+	run=true;
+}
+
+bool someonethere()
+{
+	int distance=constrain(analogRead(sensePin), sense_min, sense_max);
+	if (distance>sense_boundary)
+	{
+		Serial.println("Nobody there :-(");
+		Serial.println(distance);
+		return false;
+	}
+	else
+	{
+		Serial.println("Someone there!");
+		Serial.println(distance);
+		return true;
+	}
 }
 
 void loop()
 {
-	// read input if available
-	if (Serial.available()>0)
+	if (check)
 	{
-		int input=Serial.read() - '0';
-		Serial.println(input);
-		if (input%2==0)
-		{
-			run=true;
-		}
-		else
-		{
-			run=false;
-		}
+		run=someonethere();
 	}
 	if (run)
 	{
-		runleft(2000);
-		hold(300);
-		runright(2000);
-		hold(300);
+		runleft(5000);
+		hold(1000);
+		runright(5000);
+		hold(1000);
+	}
+	else
+	{
+		delay(1000);
 	}
 }
