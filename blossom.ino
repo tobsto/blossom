@@ -13,24 +13,28 @@ int sense_min=20;
 // threshold sensor value for people detection
 int sense_boundary=100;
 // check if someone is there
-bool check=true;
+bool check=false;
+// control by keyboard input
+bool checkInput=true;
+// motor speed (0 to 255)
+int motorSpeed=255;
 
-void runleft(int t)
+void runleft(int t, int speed)
 {
 	// start motor in left direction
 	digitalWrite(inputPin1, LOW);
 	digitalWrite(inputPin2, HIGH);
-	// enable motor
-	digitalWrite(enablePin, HIGH);
+	// enable motor with certain speed (PWM)
+	analogWrite(enablePin, speed);
 	delay(t);
 }
-void runright(int t)
+void runright(int t, int speed)
 {
 	// start motor in right direction
 	digitalWrite(inputPin1, HIGH);
 	digitalWrite(inputPin2, LOW);
-	// enable motor
-	digitalWrite(enablePin, HIGH);
+	// enable motor with certain speed (PWM)
+	analogWrite(enablePin, speed);
 	delay(t);
 }
 void hold(int t)
@@ -40,20 +44,7 @@ void hold(int t)
 	delay(t);
 }
 
-bool run;
-void setup()
-{
-	// Set enable pin to output mode
-	pinMode(enablePin, OUTPUT);
-	// Set input 1 pin to output mode
-	pinMode(inputPin1, OUTPUT);
-	// Set input 2 pin to output mode
-	pinMode(inputPin2, OUTPUT);
-	// set up serial communication
-	Serial.begin(9600);
-	// initial state is hold
-	run=true;
-}
+
 
 bool someonethere()
 {
@@ -72,21 +63,58 @@ bool someonethere()
 	}
 }
 
+void checkSerialInput(bool & run)
+{
+	// read input if available
+	if (Serial.available()>0)
+	{
+		int input=Serial.read() - '0';
+		if (input%2==0)
+		{
+			run=false;
+		}
+		else
+		{
+			run=true;
+		}
+	}
+}
+
+bool run;
+void setup()
+{
+	// Set enable pin to output mode
+	pinMode(enablePin, OUTPUT);
+	// Set input 1 pin to output mode
+	pinMode(inputPin1, OUTPUT);
+	// Set input 2 pin to output mode
+	pinMode(inputPin2, OUTPUT);
+	// set up serial communication
+	Serial.begin(9600);
+	// initial state is hold
+	run=true;
+}
 void loop()
 {
 	if (check)
 	{
 		run=someonethere();
 	}
+	if (checkInput)
+	{
+		checkSerialInput(run);
+	}
 	if (run)
 	{
-		runleft(5000);
-		hold(1000);
-		runright(5000);
-		hold(1000);
+		Serial.println("Start cycle");
+		runleft(25000, motorSpeed);
+		hold(5000);
+		runright(25000, motorSpeed);
+		hold(5000);
 	}
 	else
 	{
+		Serial.println("hold");
 		delay(1000);
 	}
 }
